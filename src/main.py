@@ -92,7 +92,7 @@ def main(args):
             dataset["train"] = dataset["train"].select(keep_indices)
         if args.train_subset < 1.0:
             dataset["train"] = dataset["train"].train_test_split(train_size=args.train_subset,
-                                                                 seed=0,
+                                                                 seed=args.seed,
                                                                  )["train"]
         if args.num_processes == 0 and args.batch_preprocess == 0:
             dataset = dataset.map(lambda x: preprocess(x,
@@ -201,5 +201,7 @@ if __name__ == "__main__":
                         help="Number of processes to use for dataset preprocessing.")
     parser.add_argument("--batch_preprocess", type=int, default=16,
                         help="Batch size for dataset preprocessing.")
+    parser.add_argument("--seed", type=int, default=0,
+                        help="Random seed for reproducibility.")
     args = parser.parse_args()
     main(args)
