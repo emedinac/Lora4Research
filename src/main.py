@@ -83,17 +83,17 @@ def main(args):
     # Load and preprocess the dataset
     data_prec_path = f"data/processed-{args.max_seq_length}-{args.model_name}-{args.train_subset}-rm_odd_{args.ignore_ood_cases}"
     if not Path(data_prec_path).exists():
+        dataset = load_dataset(args.data_dir, "default")
         if args.ignore_ood_cases:
             db_skips = loaders.get_ood_ids(args.data_dir,
                                            max_tokens=args.max_seq_length)
-        dataset = load_dataset(args.data_dir, "default")
+            all_indices = set(range(len(dataset["train"])))
+            keep_indices = list(all_indices - set(db_skips))
+            dataset["train"] = dataset["train"].select(keep_indices)
         if args.train_subset < 1.0:
             dataset["train"] = dataset["train"].train_test_split(train_size=args.train_subset,
                                                                  seed=0,
                                                                  )["train"]
-        all_indices = set(range(len(dataset["train"])))
-        keep_indices = list(all_indices - set(db_skips))
-        dataset["train"] = dataset["train"].select(keep_indices)
         if args.num_processes == 0 and args.batch_preprocess == 0:
             dataset = dataset.map(lambda x: preprocess(x,
                                                        tokenizer,
