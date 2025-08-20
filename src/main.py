@@ -85,7 +85,7 @@ def main(args):
         if args.ignore_ood_cases:
             db_skips = loaders.get_ood_ids(args.data_dir,
                                            max_tokens=args.max_seq_length)
-        dataset = load_dataset(args.data_dir, "default", streaming=True)
+        dataset = load_dataset(args.data_dir, "default")
         if args.num_processes == 0 and args.batch_preprocess == 0:
             dataset = dataset.map(lambda x: preprocess(x,
                                                        tokenizer,
