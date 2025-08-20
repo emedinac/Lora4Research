@@ -81,11 +81,18 @@ def main(args):
         args.max_seq_length = max_seq_length
 
     # Load and preprocess the dataset
-    if not Path(f"data/processed-{args.max_seq_length}-{args.model_name}").exists():
+    if not Path(f"data/processed-{args.max_seq_length}-{args.model_name}-{args.train_subset}").exists():
         if args.ignore_ood_cases:
             db_skips = loaders.get_ood_ids(args.data_dir,
                                            max_tokens=args.max_seq_length)
         dataset = load_dataset(args.data_dir, "default")
+        if args.train_subset < 1.0:
+            dataset["train"] = dataset["train"].train_test_split(train_size=args.train_subset,
+                                                                 seed=0,
+                                                                 )["train"]
+        all_indices = set(range(len(dataset["train"])))
+        keep_indices = list(all_indices - set(db_skips))
+        dataset["train"] = dataset["train"].select(keep_indices)
         if args.num_processes == 0 and args.batch_preprocess == 0:
             dataset = dataset.map(lambda x: preprocess(x,
                                                        tokenizer,
@@ -99,10 +106,10 @@ def main(args):
                                   num_proc=args.num_processes,
                                   )
         dataset.save_to_disk(
-            f"data/processed-{args.max_seq_length}-{args.model_name}")
+            f"data/processed-{args.max_seq_length}-{args.model_name}-{args.train_subset}")
     else:
         dataset = load_dataset(
-            f"data/processed-{args.max_seq_length}-{args.model_name}")
+            f"data/processed-{args.max_seq_length}-{args.model_name}-{args.train_subset}")
     """
     Description to use in LoraConfig:
     q_proj: Query projection layer in the attention mechanism.
@@ -177,6 +184,8 @@ if __name__ == "__main__":
     parser.add_argument("--lora_dropout", type=float, default=0.05,
                         help="Dropout rate for LoRA layers.")
     # Training arguments
+    parser.add_argument("--train_subset", type=float, default=1.0,
+                        help="Fraction of the *train* split to use (0-1).")
     parser.add_argument("--num_train_epochs", type=int, default=1,
                         help="Number of training epochs.")
     parser.add_argument("--per_device_train_batch_size", type=int, default=2,
@@ -193,7 +202,7 @@ if __name__ == "__main__":
                         help="Ignore out-of-distribution cases during training.")
     parser.add_argument("--num_processes", type=int, default=4,
                         help="Number of processes to use for dataset preprocessing.")
-    parser.add_argument("--batch_preprocess", type=int, default=4,
+    parser.add_argument("--batch_preprocess", type=int, default=16,
                         help="Batch size for dataset preprocessing.")
     args = parser.parse_args()
     main(args)
