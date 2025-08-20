@@ -185,7 +185,7 @@ if __name__ == "__main__":
                         help="Number of steps to accumulate gradients before updating.")
     parser.add_argument("--learning_rate", type=float, default=5e-5,
                         help="Learning rate for the optimizer.")
-    parser.add_argument("--max_seq_length", type=int, default=512,
+    parser.add_argument("--max_seq_length", type=int, default=1024,
                         help="Maximum sequence length for input samples.")
     parser.add_argument("--max_steps", type=int, default=-1,
                         help="Total number of training steps to perform. Overrides num_train_epochs if set.")
