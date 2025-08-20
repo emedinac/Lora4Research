@@ -95,8 +95,8 @@ def main(args):
         else:
             dataset = dataset.map(lambda x: preprocess_batch(x, tokenizer, max_seq_length),
                                   batched=True,
-                                  batch_size=args.num_processes,
-                                  num_proc=args.batch_preprocess,
+                                  batch_size=args.batch_preprocess,
+                                  num_proc=args.num_processes,
                                   )
         dataset.save_to_disk(
             f"data/processed-{args.max_seq_length}-{args.model_name}")
