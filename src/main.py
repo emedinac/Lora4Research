@@ -174,8 +174,6 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", required=True,
                         default="meta-llama/Llama-2-7b-chat")
     # LoRa arguments
-    parser.add_argument("--train_subset", type=float, default=1.0,
-                        help="Fraction of the *train* split to use (0-1).")
     parser.add_argument("--lora_r", type=int, default=8,
                         help="Rank for LoRA layers.")
     parser.add_argument("--lora_alpha", type=int, default=16,
