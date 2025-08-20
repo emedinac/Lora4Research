@@ -81,7 +81,8 @@ def main(args):
         args.max_seq_length = max_seq_length
 
     # Load and preprocess the dataset
-    if not Path(f"data/processed-{args.max_seq_length}-{args.model_name}-{args.train_subset}").exists():
+    data_prec_path = f"data/processed-{args.max_seq_length}-{args.model_name}-{args.train_subset}-rm_odd_{args.ignore_ood_cases}"
+    if not Path(data_prec_path).exists():
         if args.ignore_ood_cases:
             db_skips = loaders.get_ood_ids(args.data_dir,
                                            max_tokens=args.max_seq_length)
@@ -105,11 +106,9 @@ def main(args):
                                   batch_size=args.batch_preprocess,
                                   num_proc=args.num_processes,
                                   )
-        dataset.save_to_disk(
-            f"data/processed-{args.max_seq_length}-{args.model_name}-{args.train_subset}")
+        dataset.save_to_disk(data_prec_path)
     else:
-        dataset = load_dataset(
-            f"data/processed-{args.max_seq_length}-{args.model_name}-{args.train_subset}")
+        dataset = load_dataset(data_prec_path)
     """
     Description to use in LoraConfig:
     q_proj: Query projection layer in the attention mechanism.
@@ -198,7 +197,7 @@ if __name__ == "__main__":
                         help="Maximum sequence length for input samples.")
     parser.add_argument("--max_steps", type=int, default=-1,
                         help="Total number of training steps to perform. Overrides num_train_epochs if set.")
-    parser.add_argument("--ignore_ood_cases", action="store_true",
+    parser.add_argument("--ignore_ood_cases", action="store_true", default=False,
                         help="Ignore out-of-distribution cases during training.")
     parser.add_argument("--num_processes", type=int, default=4,
                         help="Number of processes to use for dataset preprocessing.")
