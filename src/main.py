@@ -191,9 +191,9 @@ if __name__ == "__main__":
                         help="Total number of training steps to perform. Overrides num_train_epochs if set.")
     parser.add_argument("--ignore_ood_cases", action="store_true",
                         help="Ignore out-of-distribution cases during training.")
-    parser.add_argument("--num_processes", type=int, default=16,
+    parser.add_argument("--num_processes", type=int, default=4,
                         help="Number of processes to use for dataset preprocessing.")
-    parser.add_argument("--batch_preprocess", type=int, default=16,
+    parser.add_argument("--batch_preprocess", type=int, default=4,
                         help="Batch size for dataset preprocessing.")
     args = parser.parse_args()
     main(args)
