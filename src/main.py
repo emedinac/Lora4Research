@@ -161,11 +161,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Train a model with LoRA on the Lora4Research dataset."
     )
-    parser.add_argument("--data_dir", default="data",
+    parser.add_argument("--data_dir", required=True,
                         help="Directory containing the dataset files.")
     parser.add_argument("--output_dir", required=True,
                         help="Directory to save the trained model.")
-    parser.add_argument("--model_name",
+    parser.add_argument("--model_name", required=True,
                         default="meta-llama/Llama-2-7b-chat")
     # LoRa arguments
     parser.add_argument("--train_subset", type=float, default=1.0,
