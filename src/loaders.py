@@ -90,11 +90,15 @@ def preprocess(examples, tokenizer, max_seq_length=512):
     )
     enc["attention_mask"] = enc["attention_mask"].bool()
 
-    labels = []
-    for input_ids in enc["input_ids"]:
-        label = build_label_mask(torch.tensor(input_ids), tokenizer)
-        labels.append(label.tolist())
-    enc["labels"] = labels
+    enc["labels"] = torch.stack([
+        build_label_mask(input_ids, tokenizer)
+        for input_ids in enc["input_ids"]
+    ])
+    # labels = []
+    # for input_ids in enc["input_ids"]:
+    #     label = build_label_mask(torch.tensor(input_ids), tokenizer)
+    #     labels.append(label.tolist())
+    # enc["labels"] = labels
     return enc
 
 
