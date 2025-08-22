@@ -1,6 +1,9 @@
 from datasets import load_dataset
 import tqdm
 import re
+from pathlib import Path
+from datasets import load_dataset, DatasetDict, load_from_disk
+import torch
 
 MIN_SENTENCES = 1
 TEST_MIN_APPROACH_TOKENS = 5
@@ -57,6 +60,86 @@ def get_ood_ids(data_to_download, db="default", max_tokens=512):
                 continue
             print(f"{db} - {reason}: {count:,}")
     return db_skips
+
+
+def format_sample(ex):
+    return f"<problem>\n{ex['input']}\n</problem>\n<approach>\n{ex['output']}\n</approach>"
+
+
+def build_label_mask(input_ids, tokenizer):
+    labels = input_ids.clone()
+    aid = tokenizer.convert_tokens_to_ids("<approach>")
+    idx = (input_ids == aid).nonzero(as_tuple=True)
+    if len(idx[0]):
+        labels[: idx[0][0] + 1] = -100
+    return labels
+
+
+def preprocess(examples, tokenizer, max_seq_length=512):
+    if isinstance(examples["input"], list):
+        texts = [format_sample({"input": inp, "output": out})
+                 for inp, out in zip(examples["input"], examples["output"])]
+    else:
+        texts = [format_sample(examples)]
+    enc = tokenizer(
+        texts,
+        max_length=max_seq_length,
+        truncation=True,
+        padding="max_length",
+        return_tensors="pt",
+    )
+    enc["attention_mask"] = enc["attention_mask"].bool()
+
+    labels = []
+    for input_ids in enc["input_ids"]:
+        label = build_label_mask(torch.tensor(input_ids), tokenizer)
+        labels.append(label.tolist())
+    enc["labels"] = labels
+    return enc
+
+
+def get_dataset(data_prec_path, args, tokenizer, max_seq_length=512):
+    if not Path(data_prec_path).exists():
+        dataset = load_dataset(args.data_dir, "default")
+        if args.ignore_ood_cases:
+            db_skips = get_ood_ids(args.data_dir,
+                                   max_tokens=args.max_seq_length)
+            all_dataset = {}
+            for split, _ in db_skips.items():
+                all_indices = set(range(len(dataset[split])))
+                keep_indices = list(all_indices - set(db_skips))
+                all_dataset[split] = dataset[split].select(keep_indices)
+            dataset = DatasetDict(all_dataset)
+        if args.subset_fraction < 1.0:  # reduce it due to computational constraints
+            dataset = DatasetDict({
+                split: dataset[split].shuffle(seed=args.seed).select(
+                    list(
+                        range(int(args.subset_fraction * len(dataset[split]))))
+                )
+                for split in dataset.keys()
+            })
+        if args.num_processes == 0 and args.batch_preprocess == 0:
+            dataset = dataset.map(lambda x: preprocess(x, tokenizer, max_seq_length)
+                                  )
+        else:
+            dataset = dataset.map(lambda x: preprocess(x, tokenizer, max_seq_length),
+                                  batched=True,
+                                  batch_size=args.batch_preprocess,
+                                  num_proc=args.num_processes,
+                                  )
+        dataset.save_to_disk(data_prec_path)
+    else:
+        dataset = load_from_disk(data_prec_path)
+
+    print("\nDatabase status:")
+    print("Dataset splits:", list(dataset.keys()))
+    print("Train size:", len(dataset["train"]))
+    print("Validation size:", len(dataset["validation"]))
+    sample = dataset["train"][0]
+    print("Sample input_ids shape:", sample["input_ids"].shape)
+    print("Sample attention_mask shape:", sample["attention_mask"].shape)
+    print("Sample labels shape:", sample["labels"].shape)
+    return dataset
 
 
 if __name__ == "__main__":
