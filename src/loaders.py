@@ -75,7 +75,7 @@ def build_label_mask(input_ids, tokenizer):
     return labels
 
 
-def preprocess(examples, tokenizer, max_seq_length=512):
+def data_preprocess(examples, tokenizer, max_seq_length=512):
     if isinstance(examples["input"], list):
         texts = [format_sample({"input": inp, "output": out})
                  for inp, out in zip(examples["input"], examples["output"])]
@@ -88,17 +88,15 @@ def preprocess(examples, tokenizer, max_seq_length=512):
         padding="max_length",
         return_tensors="pt",
     )
-    enc["attention_mask"] = enc["attention_mask"].bool()
-
+    # Remove batch dimension for single examples
+    if not isinstance(examples["input"], list):
+        enc["input_ids"] = enc["input_ids"].squeeze(0)
+        enc["attention_mask"] = enc["attention_mask"].squeeze(0)
     enc["labels"] = torch.stack([
         build_label_mask(input_ids, tokenizer)
-        for input_ids in enc["input_ids"]
-    ])
-    # labels = []
-    # for input_ids in enc["input_ids"]:
-    #     label = build_label_mask(torch.tensor(input_ids), tokenizer)
-    #     labels.append(label.tolist())
-    # enc["labels"] = labels
+        for input_ids in enc["input_ids"].split(1)
+    ]).squeeze()
+    # enc["attention_mask"] = enc["attention_mask"].bool()
     return enc
 
 
@@ -123,10 +121,10 @@ def get_dataset(data_prec_path, args, tokenizer, max_seq_length=512):
                 for split in dataset.keys()
             })
         if args.num_processes == 0 and args.batch_preprocess == 0:
-            dataset = dataset.map(lambda x: preprocess(x, tokenizer, max_seq_length)
+            dataset = dataset.map(lambda x: data_preprocess(x, tokenizer, max_seq_length)
                                   )
         else:
-            dataset = dataset.map(lambda x: preprocess(x, tokenizer, max_seq_length),
+            dataset = dataset.map(lambda x: data_preprocess(x, tokenizer, max_seq_length),
                                   batched=True,
                                   batch_size=args.batch_preprocess,
                                   num_proc=args.num_processes,
