@@ -136,9 +136,12 @@ def get_dataset(data_prec_path, args, tokenizer, max_seq_length=512):
     print("Train size:", len(dataset["train"]))
     print("Validation size:", len(dataset["validation"]))
     sample = dataset["train"][0]
-    print("Sample input_ids shape:", sample["input_ids"].shape)
-    print("Sample attention_mask shape:", sample["attention_mask"].shape)
-    print("Sample labels shape:", sample["labels"].shape)
+    print("Sample input_ids shape:",
+          torch.Tensor(sample["input_ids"]).shape)
+    print("Sample attention_mask shape:",
+          torch.Tensor(sample["attention_mask"]).shape)
+    print("Sample labels shape:",
+          torch.Tensor(sample["labels"]).shape)
     return dataset
 
 
