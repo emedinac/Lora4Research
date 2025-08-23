@@ -9,17 +9,12 @@ import argparse
 
 
 def main(args):
-    # Load and preprocess dataset
     data_prec_path = f"data/processed-{args.max_new_tokens}-{args.model_name.replace('/', '-')}-{args.subset_fraction}"
     if Path(data_prec_path).exists() is False:
         AssertionError("Please insert a valid preprocessed data path")
     if Path(args.model_path).exists() is False:
         AssertionError("Please insert a valid model path")
-    dataset = loaders.get_dataset(data_prec_path,
-                                  args,
-                                  tokenizer,
-                                  args.max_new_tokens,
-                                  "test")
+
     # Load model and tokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.model_path,
                                               trust_remote_code=True
@@ -30,6 +25,12 @@ def main(args):
                                                  )
     model.resize_token_embeddings(len(tokenizer))
     model.eval()
+    # Load and preprocess dataset
+    dataset = loaders.get_dataset(data_prec_path,
+                                  args,
+                                  tokenizer,
+                                  args.max_new_tokens,
+                                  "test")
     # Load metrics
     bleu = evaluate.load("sacrebleu")
     rouge = evaluate.load("rouge")
