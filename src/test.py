@@ -12,14 +12,17 @@ def main(args):
     data_prec_path = f"data/processed-{args.max_new_tokens}-{args.model_name.replace('/', '-')}-{args.subset_fraction}"
     if Path(data_prec_path).exists() is False:
         AssertionError("Please insert a valid preprocessed data path")
-    if Path(args.model_path).exists() and Path(args.model_path).is_dir():
+    hf_model_enabled = Path(args.model_path).exists()
+    if hf_model_enabled:
         model_name = Path(args.model_path).joinpath("merged")
+        tokenizer_name = args.model_path
     else:
         print("Please insert a valid model path, but we will use the model name to load the HF model")
         model_name = args.model_name
+        tokenizer_name = args.model_name
 
     # Load model and tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(args.model_path,
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name,
                                               trust_remote_code=True
                                               )
     model = AutoModelForCausalLM.from_pretrained(model_name,
@@ -27,7 +30,12 @@ def main(args):
                                                  device_map="auto" if torch.cuda.is_available() else "cpu",
                                                  )
     # in case tokenizer size changed, but for standard models it should be the same is the same :)
-    model.resize_token_embeddings(len(tokenizer))
+    if hf_model_enabled:
+        tokenizer.add_special_tokens({
+            "additional_special_tokens": ["<problem>", "</problem>", "<approach>", "</approach>"]
+        })
+        tokenizer.pad_token = tokenizer.eos_token
+        model.resize_token_embeddings(len(tokenizer))
     model.eval()
     # Load and preprocess dataset
     dataset = loaders.get_dataset(data_prec_path,
