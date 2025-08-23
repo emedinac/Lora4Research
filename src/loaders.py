@@ -94,7 +94,7 @@ def data_preprocess(examples, tokenizer, max_new_tokens=512):
         enc["attention_mask"] = enc["attention_mask"].squeeze(0)
     enc["labels"] = torch.stack([
         build_label_mask(input_ids, tokenizer)
-        for input_ids in enc["input_ids"].subset(1)
+        for input_ids in enc["input_ids"].split(1)
     ]).squeeze()
     # enc["attention_mask"] = enc["attention_mask"].bool()
     return enc
