@@ -116,10 +116,10 @@ if __name__ == "__main__":
                         help="Total training steps.")
     parser.add_argument("--ignore_ood_cases", action="store_true", default=False,
                         help="Ignore out-of-distribution cases.")
-    parser.add_argument("--num_processes", type=int, default=0,
+    parser.add_argument("--num_processes", type=int, default=8,
                         help="Number of processes for preprocessing.")
-    parser.add_argument("--batch_preprocess", type=int,
-                        default=16, help="Batch size for preprocessing.")
+    parser.add_argument("--batch_preprocess", type=int, default=64, 
+                        help="Batch size for preprocessing.")
     parser.add_argument("--seed", type=int, default=0, help="Random seed.")
     args = parser.parse_args()
     main(args)
