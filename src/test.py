@@ -12,7 +12,7 @@ def main(args):
     data_prec_path = f"data/processed-{args.max_new_tokens}-{args.model_name.replace('/', '-')}-{args.subset_fraction}"
     if Path(data_prec_path).exists() is False:
         AssertionError("Please insert a valid preprocessed data path")
-    if Path(args.model_path).exists():
+    if Path(args.model_path).exists() and Path(args.model_path).is_dir():
         model_name = Path(args.model_path).joinpath("merged")
     else:
         print("Please insert a valid model path, but we will use the model name to load the HF model")
