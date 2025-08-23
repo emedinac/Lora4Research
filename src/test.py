@@ -54,7 +54,7 @@ def main(args):
     batch_size = args.batch_size if args.batch_size > 0 else 1
 
     for i in tqdm.tqdm(range(0, len(dataset), batch_size), desc="Processing"):
-        batch = dataset[i:i+batch_size]
+        batch = dataset.select(range(i, min(i+batch_size, len(dataset))))
         prompts = [f"<problem>\n{sample['input']}\n</problem>\n<approach>\n"
                    for sample in batch
                    ]

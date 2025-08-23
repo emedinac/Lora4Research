@@ -26,7 +26,6 @@ Computes automatically standard NLP metrics such as:
 - ROUGE-L (rouge-score): evaluates longest common subsequence.
 - BERTScore (bertscore): evaluates semantic similarity using contextual embeddings.
 
-
 Specifically, Added:
 
 - [X] LoRa implementation
@@ -46,7 +45,7 @@ uv sync --active
 
 ## Run
 
-To fine-tune a model, run the following command, considering `lora_r` and `lora_alpha` as the main parameters. Follow the documentation, [PEFT](https://github.com/huggingface/peft/). 
+To fine-tune a model, run the following command, considering `lora_r` and `lora_alpha` as the main parameters. Follow the documentation, [PEFT](https://github.com/huggingface/peft/).
 
 Command example for model training:
 
