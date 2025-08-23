@@ -9,6 +9,17 @@ import argparse
 
 
 def main(args):
+    # Load and preprocess dataset
+    data_prec_path = f"data/processed-{args.max_new_tokens}-{args.model_name.replace('/', '-')}-{args.subset_fraction}"
+    if Path(data_prec_path).exists() is False:
+        AssertionError("Please insert a valid preprocessed data path")
+    if Path(args.model_path).exists() is False:
+        AssertionError("Please insert a valid model path")
+    dataset = loaders.get_dataset(data_prec_path,
+                                  args,
+                                  tokenizer,
+                                  args.max_new_tokens,
+                                  "test")
     # Load model and tokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.model_path,
                                               trust_remote_code=True
@@ -23,13 +34,7 @@ def main(args):
     bleu = evaluate.load("sacrebleu")
     rouge = evaluate.load("rouge")
     bertscore = evaluate.load("bertscore")
-    # Load and preprocess dataset
-    data_prec_path = f"data/processed-{args.max_new_tokens}-{args.model_name.replace('/', '-')}-{args.subset_fraction}"
-    dataset = loaders.get_dataset(data_prec_path,
-                                  args,
-                                  tokenizer,
-                                  args.max_new_tokens,
-                                  "test")
+
     preds, gts = [], []
     for sample in tqdm.tqdm(dataset, desc="Processing"):
         prompt = f"<problem>\n{sample['problem']}\n</problem>\n<approach>\n"
@@ -68,5 +73,7 @@ if __name__ == "__main__":
                         default="TinyLlama/TinyLlama-1.1B-Chat-v1.0")
     parser.add_argument("--data_dir", default="data")
     parser.add_argument("--max_new_tokens", type=int, default=256)
+    parser.add_argument("--subset_fraction", type=float, default=0.01,
+                        help="Fraction of train split to use (0-1).")
     args = parser.parse_args()
     main(args)
