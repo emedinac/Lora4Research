@@ -103,6 +103,7 @@ def data_preprocess(examples, tokenizer, max_new_tokens=512):
 def get_dataset(data_prec_path, args, tokenizer, max_new_tokens=512, split=None):
     # args as input argument can be improved :D
     if not Path(data_prec_path).exists():
+        print("Preprocessing dataset...")
         dataset = load_dataset(args.data_dir, "default")
         if args.ignore_ood_cases:
             db_skips = get_ood_ids(args.data_dir,
