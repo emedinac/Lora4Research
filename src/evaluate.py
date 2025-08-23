@@ -18,6 +18,7 @@ def main(args):
                                                  torch_dtype=torch.float16,
                                                  device_map="auto" if torch.cuda.is_available() else "cpu",
                                                  )
+    model.resize_token_embeddings(len(tokenizer))
     model.eval()
     # Load metrics
     bleu = evaluate.load("sacrebleu")
