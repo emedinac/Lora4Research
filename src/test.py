@@ -52,7 +52,7 @@ def main(args):
         approach = out.split(
             "</approach>")[-1] if "</approach>" in out else out
         preds.append(approach.strip())
-        gts.append(sample["approach"].strip())
+        gts.append(sample["output"].strip())
 
     bleu_res = bleu.compute(predictions=preds, references=[[gt] for gt in gts])
     rouge_res = rouge.compute(predictions=preds, references=gts)
