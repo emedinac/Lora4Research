@@ -5,10 +5,10 @@ Fine-tuning and evaluation framework for offline LLMs using Low-Rank Adaptation 
 A fully offline system for research Q&A, enabling efficient fine-tuning of locally-hosted large language models and automatic metric evaluation.
 
 | Model            | BLEU | ROUGE-L | BERTScore (F1) |
-| ---------------- | ---- | ------- | -------------- |
-| LoRa-TinyLlama-1.1B (1 epoch) | 3.56 | 0.1127  | 0.8139         |
-| LoRa-TinyLlama-1.1B (5 epoch) | 3.56 | 0.1127  | 0.8139         |
-| HF TinyLlama-1.1B (Baseline) | 3.20 | 0.0980  | 0.8118         |
+| -------------------- | ---- | ------- | --- |
+| LoRa-TinyLlama-1.1B (1 epoch) | 3.56 | 0.1127  | 0.8139 |
+| LoRa-TinyLlama-1.1B (5 epoch) |  |  | |
+| HF TinyLlama-1.1B (Baseline) | 3.20 | 0.0980  | 0.8118 |
 
 NOTE: For simplicity, all results were trained and tested on the same seed using only **0.1%** of the dataset.
 
@@ -18,10 +18,11 @@ NOTE: For simplicity, all results were trained and tested on the same seed using
 
 ## Key Features
 
-LoRA Fine-tuning: Low-rank adaptation layers applied to base LLMs for efficient fine-tuning.
+LoRA Fine-tuning: Low-rank adaptation layers applied to base LLMs for efficient fine-tuning. Implemented via `PEFT` from Huggingface.
+
 Computes automatically standard NLP metrics such as:
 
-- BLEU (sacrebleu): evaluates n-gram overlap. 
+- BLEU (sacrebleu): evaluates n-gram overlap.
 - ROUGE-L (rouge-score): evaluates longest common subsequence.
 - BERTScore (bertscore): evaluates semantic similarity using contextual embeddings.
 
