@@ -12,20 +12,21 @@ def main(args):
     data_prec_path = f"data/processed-{args.max_new_tokens}-{args.model_name.replace('/', '-')}-{args.subset_fraction}"
     if Path(data_prec_path).exists() is False:
         AssertionError("Please insert a valid preprocessed data path")
-    hf_model_enabled = args.model_path == "" or args.model_path is None or Path(args.model_name).exists() is False
+    hf_model_enabled = args.model_path == "" or args.model_path is None or Path(
+        args.model_name).exists() is False
     if hf_model_enabled:
         print("Please insert a valid model path, but we will use the model name to load the HF model")
-        model_name=args.model_name
-        tokenizer_name=args.model_name
+        model_name = args.model_name
+        tokenizer_name = args.model_name
     else:
-        model_name=Path(args.model_path).joinpath("merged")
-        tokenizer_name=args.model_path
+        model_name = Path(args.model_path).joinpath("merged")
+        tokenizer_name = args.model_path
 
     # Load model and tokenizer
-    tokenizer=AutoTokenizer.from_pretrained(tokenizer_name,
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_name,
                                               trust_remote_code=True
                                               )
-    model=AutoModelForCausalLM.from_pretrained(model_name,
+    model = AutoModelForCausalLM.from_pretrained(model_name,
                                                  torch_dtype=torch.float16,
                                                  device_map="auto" if torch.cuda.is_available() else "cpu",
                                                  )
@@ -34,41 +35,52 @@ def main(args):
         tokenizer.add_special_tokens({
             "additional_special_tokens": ["<problem>", "</problem>", "<approach>", "</approach>"]
         })
-        tokenizer.pad_token=tokenizer.eos_token
+        tokenizer.pad_token = tokenizer.eos_token
         model.resize_token_embeddings(len(tokenizer))
     model.eval()
     # Load and preprocess dataset
-    dataset=loaders.get_dataset(data_prec_path,
+    dataset = loaders.get_dataset(data_prec_path,
                                   args,
                                   tokenizer,
                                   args.max_new_tokens,
                                   "test")
     # Load metrics
-    bleu=evaluate.load("sacrebleu")
-    rouge=evaluate.load("rouge")
-    bertscore=evaluate.load("bertscore")
+    bleu = evaluate.load("sacrebleu")
+    rouge = evaluate.load("rouge")
+    bertscore = evaluate.load("bertscore")
 
-    preds, gts=[], []
-    for sample in tqdm.tqdm(dataset, desc="Processing"):
-        prompt=f"<problem>\n{sample['input']}\n</problem>\n<approach>\n"
-        input_ids=tokenizer(prompt, return_tensors="pt").to(model.device)
-        outputs=model.generate(**input_ids,
-                                 temperature=0.7,
-                                 top_p=0.9,
-                                 max_new_tokens=args.max_new_tokens,
-                                 do_sample=True,
-                                 eos_token_id=tokenizer.eos_token_id,
-                                 pad_token_id=tokenizer.pad_token_id,
-                                 )
-        out=tokenizer.decode(outputs[0], skip_special_tokens=True)
-        approach=out.split(
-            "</approach>")[-1] if "</approach>" in out else out
-        preds.append(approach.strip())
-        gts.append(sample["output"].strip())
+    preds, gts = [], []
+    preds, gts = [], []
+    batch_size = args.batch_size if args.batch_size > 0 else 1
 
-    bleu_res=bleu.compute(predictions=preds, references=[[gt] for gt in gts])
-    rouge_res=rouge.compute(predictions=preds, references=gts)
-    bert_res=bertscore.compute(predictions=preds, references=gts, lang="en")
+    for i in tqdm.tqdm(range(0, len(dataset), batch_size), desc="Processing"):
+        batch = dataset[i:i+batch_size]
+        prompts = [f"<problem>\n{sample['input']}\n</problem>\n<approach>\n"
+                   for sample in batch
+                   ]
+        encodings = tokenizer(prompts,
+                              return_tensors="pt",
+                              padding=True,
+                              truncation=True).to(model.device)
+        outputs = model.generate(
+            **encodings,
+            temperature=0.7,
+            top_p=0.9,
+            max_new_tokens=args.max_new_tokens,
+            do_sample=True,
+            eos_token_id=tokenizer.eos_token_id,
+            pad_token_id=tokenizer.pad_token_id,
+        )
+        decoded = tokenizer.batch_decode(outputs, skip_special_tokens=True)
+        approaches = [out.split("</approach>")[-1] if "</approach>" in out else out
+                      for out in decoded
+                      ]
+        preds.extend([a.strip() for a in approaches])
+        gts.extend([sample["output"].strip() for sample in batch])
+
+    bleu_res = bleu.compute(predictions=preds, references=[[gt] for gt in gts])
+    rouge_res = rouge.compute(predictions=preds, references=gts)
+    bert_res = bertscore.compute(predictions=preds, references=gts, lang="en")
 
     print("\n\n=== Evaluation Metrics ===")
     print(f"BLEU:       {bleu_res['score']:.2f}")
@@ -77,7 +89,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser=argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         description="Computes the metrics: BLEU, ROUGE-L and BERTScore on the testset for a Fine-Tune model (LoRa)."
     )
     parser.add_argument("--model_name", required=True,
@@ -85,6 +97,8 @@ if __name__ == "__main__":
     parser.add_argument("--data_dir", default="data")
     parser.add_argument("--model_path",
                         help="Path to the merged saved model checkpoint.")
+    parser.add_argument("--batch_size", type=int, default=16,
+                        help="Batch size for inference.")
     parser.add_argument("--max_new_tokens", type=int, default=256)
     parser.add_argument("--subset_fraction", type=float, default=0.01,
                         help="Fraction of train split to use (0-1).")
@@ -95,5 +109,5 @@ if __name__ == "__main__":
     parser.add_argument("--batch_preprocess", type=int, default=0,
                         help="Batch size for preprocessing.")
     parser.add_argument("--seed", type=int, default=0, help="Random seed.")
-    args=parser.parse_args()
+    args = parser.parse_args()
     main(args)
