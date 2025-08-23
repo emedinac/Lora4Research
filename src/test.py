@@ -76,5 +76,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_new_tokens", type=int, default=256)
     parser.add_argument("--subset_fraction", type=float, default=0.01,
                         help="Fraction of train split to use (0-1).")
+    parser.add_argument("--ignore_ood_cases", action="store_true", default=False,
+                        help="Ignore out-of-distribution cases.")
     args = parser.parse_args()
     main(args)
