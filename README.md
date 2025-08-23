@@ -7,8 +7,14 @@ A fully offline system for research Q&A, enabling efficient fine-tuning of local
 | Model            | BLEU | ROUGE-L | BERTScore (F1) |
 | ---------------- | ---- | ------- | -------------- |
 | LoRa-TinyLlama-1.1B (1 epoch) | 3.56 | 0.1127  | 0.8139         |
+| LoRa-TinyLlama-1.1B (5 epoch) | 3.56 | 0.1127  | 0.8139         |
 | HF TinyLlama-1.1B (Baseline) | 3.20 | 0.0980  | 0.8118         |
 
+NOTE: For simplicity, all results were trained and tested on the same seed using only **0.1%** of the dataset.
+
+- Train size: 3229
+- Validation size: 130
+- Test size: 130
 
 ## Key Features
 
