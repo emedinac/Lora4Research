@@ -11,7 +11,9 @@ import argparse
 def main(args):
     # Load model and tokenizer
     model_path = Path(args.model_path)
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    tokenizer = AutoTokenizer.from_pretrained(model_path,
+                                              trust_remote_code=True
+                                              )
     model = AutoModelForCausalLM.from_pretrained(model_path,
                                                  torch_dtype=torch.float16,
                                                  device_map="auto" if torch.cuda.is_available() else "cpu",
@@ -22,11 +24,11 @@ def main(args):
     rouge = evaluate.load("rouge")
     bertscore = evaluate.load("bertscore")
     # Load and preprocess dataset
-    data_prec_path = f"data/processed-{args.max_seq_length}-{args.model_name.replace('/', '-')}-{args.subset_fraction}"
+    data_prec_path = f"data/processed-{args.max_new_tokens}-{args.model_name.replace('/', '-')}-{args.subset_fraction}"
     dataset = loaders.get_dataset(data_prec_path,
                                   args,
                                   tokenizer,
-                                  args.max_seq_length,
+                                  args.max_new_tokens,
                                   "test")
     preds, gts = [], []
     for sample in tqdm.tqdm(dataset, desc="Processing"):

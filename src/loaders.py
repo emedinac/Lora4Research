@@ -75,7 +75,7 @@ def build_label_mask(input_ids, tokenizer):
     return labels
 
 
-def data_preprocess(examples, tokenizer, max_seq_length=512):
+def data_preprocess(examples, tokenizer, max_new_tokens=512):
     if isinstance(examples["input"], list):
         texts = [format_sample({"input": inp, "output": out})
                  for inp, out in zip(examples["input"], examples["output"])]
@@ -83,7 +83,7 @@ def data_preprocess(examples, tokenizer, max_seq_length=512):
         texts = [format_sample(examples)]
     enc = tokenizer(
         texts,
-        max_length=max_seq_length,
+        max_length=max_new_tokens,
         truncation=True,
         padding="max_length",
         return_tensors="pt",
@@ -100,13 +100,13 @@ def data_preprocess(examples, tokenizer, max_seq_length=512):
     return enc
 
 
-def get_dataset(data_prec_path, args, tokenizer, max_seq_length=512, split=None):
+def get_dataset(data_prec_path, args, tokenizer, max_new_tokens=512, split=None):
     # args as input argument can be improved :D
     if not Path(data_prec_path).exists():
         dataset = load_dataset(args.data_dir, "default")
         if args.ignore_ood_cases:
             db_skips = get_ood_ids(args.data_dir,
-                                   max_tokens=args.max_seq_length)
+                                   max_tokens=args.max_new_tokens)
             all_dataset = {}
             for subset, _ in db_skips.items():
                 all_indices = set(range(len(dataset[subset])))
@@ -122,10 +122,10 @@ def get_dataset(data_prec_path, args, tokenizer, max_seq_length=512, split=None)
                 for subset in dataset.keys()
             })
         if args.num_processes == 0 and args.batch_preprocess == 0:
-            dataset = dataset.map(lambda x: data_preprocess(x, tokenizer, max_seq_length)
+            dataset = dataset.map(lambda x: data_preprocess(x, tokenizer, max_new_tokens)
                                   )
         else:
-            dataset = dataset.map(lambda x: data_preprocess(x, tokenizer, max_seq_length),
+            dataset = dataset.map(lambda x: data_preprocess(x, tokenizer, max_new_tokens),
                                   batched=True,
                                   batch_size=args.batch_preprocess,
                                   num_proc=args.num_processes,

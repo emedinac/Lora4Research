@@ -31,9 +31,9 @@ def main(args):
     model.resize_token_embeddings(len(tokenizer))
 
     # Load and preprocess dataset
-    data_prec_path = f"data/processed-{args.max_seq_length}-{args.model_name.replace('/', '-')}-{args.subset_fraction}"
+    data_prec_path = f"data/processed-{args.max_new_tokens}-{args.model_name.replace('/', '-')}-{args.subset_fraction}"
     dataset = loaders.get_dataset(
-        data_prec_path, args, tokenizer, args.max_seq_length)
+        data_prec_path, args, tokenizer, args.max_new_tokens)
 
     # LoRA configuration
     lora_config = LoraConfig(
@@ -110,7 +110,7 @@ if __name__ == "__main__":
                         help="Gradient accumulation steps.")
     parser.add_argument("--learning_rate", type=float,
                         default=5e-5, help="Learning rate.")
-    parser.add_argument("--max_seq_length", type=int, default=512,
+    parser.add_argument("--max_new_tokens", type=int, default=512,
                         help="Maximum sequence length.")
     parser.add_argument("--max_steps", type=int, default=-1,
                         help="Total training steps.")
