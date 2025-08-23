@@ -13,7 +13,7 @@ def main(args):
     tokenizer = AutoTokenizer.from_pretrained(args.model_path,
                                               trust_remote_code=True
                                               )
-    model = AutoModelForCausalLM.from_pretrained(args.model_path,
+    model = AutoModelForCausalLM.from_pretrained(Path(args.model_path).joinpath("merged"),
                                                  torch_dtype=torch.float16,
                                                  device_map="auto" if torch.cuda.is_available() else "cpu",
                                                  )
