@@ -10,11 +10,10 @@ import argparse
 
 def main(args):
     # Load model and tokenizer
-    model_path = Path(args.model_path)
-    tokenizer = AutoTokenizer.from_pretrained(model_path,
+    tokenizer = AutoTokenizer.from_pretrained(args.model_path,
                                               trust_remote_code=True
                                               )
-    model = AutoModelForCausalLM.from_pretrained(model_path,
+    model = AutoModelForCausalLM.from_pretrained(args.model_path,
                                                  torch_dtype=torch.float16,
                                                  device_map="auto" if torch.cuda.is_available() else "cpu",
                                                  )
