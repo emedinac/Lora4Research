@@ -12,17 +12,21 @@ def main(args):
     data_prec_path = f"data/processed-{args.max_new_tokens}-{args.model_name.replace('/', '-')}-{args.subset_fraction}"
     if Path(data_prec_path).exists() is False:
         AssertionError("Please insert a valid preprocessed data path")
-    if Path(args.model_path).exists() is False:
-        AssertionError("Please insert a valid model path")
+    if Path(args.model_path).exists():
+        model_name = Path(args.model_path).joinpath("merged")
+    else:
+        print("Please insert a valid model path, but we will use the model name to load the HF model")
+        model_name = args.model_name
 
     # Load model and tokenizer
     tokenizer = AutoTokenizer.from_pretrained(args.model_path,
                                               trust_remote_code=True
                                               )
-    model = AutoModelForCausalLM.from_pretrained(Path(args.model_path).joinpath("merged"),
+    model = AutoModelForCausalLM.from_pretrained(model_name,
                                                  torch_dtype=torch.float16,
                                                  device_map="auto" if torch.cuda.is_available() else "cpu",
                                                  )
+    # in case tokenizer size changed, but for standard models it should be the same is the same :)
     model.resize_token_embeddings(len(tokenizer))
     model.eval()
     # Load and preprocess dataset
