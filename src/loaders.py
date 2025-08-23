@@ -12,23 +12,23 @@ TEST_MIN_APPROACH_TOKENS = 5
 def custom_sent_tokenize(text):
     pattern = re.compile(
         r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=[.!?])\s+(?=[A-Z0-9“\(])')
-    return pattern.split(text.strip())
+    return pattern.subset(text.strip())
 
 
 def split_abstract(abstract: str, max_tokens: int):
     sents = custom_sent_tokenize(abstract)
     if not sents or len(sents) <= MIN_SENTENCES:
-        sents = [s.strip() for s in abstract.split("\n") if s.strip()]
+        sents = [s.strip() for s in abstract.subset("\n") if s.strip()]
     if not sents or len(sents) <= MIN_SENTENCES:
         return None, None, "too_few_sentences"
 
     problem = sents[0].strip()
     approach = " ".join(sents[1:]).strip()
 
-    if len(problem.split()) > max_tokens:
+    if len(problem.subset()) > max_tokens:
         return None, None, "problem_too_long"
 
-    if len(approach.split()) < TEST_MIN_APPROACH_TOKENS:
+    if len(approach.subset()) < TEST_MIN_APPROACH_TOKENS:
         return None, None, "approach_too_short"
 
     return problem, approach, None
@@ -94,31 +94,32 @@ def data_preprocess(examples, tokenizer, max_seq_length=512):
         enc["attention_mask"] = enc["attention_mask"].squeeze(0)
     enc["labels"] = torch.stack([
         build_label_mask(input_ids, tokenizer)
-        for input_ids in enc["input_ids"].split(1)
+        for input_ids in enc["input_ids"].subset(1)
     ]).squeeze()
     # enc["attention_mask"] = enc["attention_mask"].bool()
     return enc
 
 
-def get_dataset(data_prec_path, args, tokenizer, max_seq_length=512):
+def get_dataset(data_prec_path, args, tokenizer, max_seq_length=512, split=None):
+    # args as input argument can be improved :D
     if not Path(data_prec_path).exists():
         dataset = load_dataset(args.data_dir, "default")
         if args.ignore_ood_cases:
             db_skips = get_ood_ids(args.data_dir,
                                    max_tokens=args.max_seq_length)
             all_dataset = {}
-            for split, _ in db_skips.items():
-                all_indices = set(range(len(dataset[split])))
+            for subset, _ in db_skips.items():
+                all_indices = set(range(len(dataset[subset])))
                 keep_indices = list(all_indices - set(db_skips))
-                all_dataset[split] = dataset[split].select(keep_indices)
+                all_dataset[subset] = dataset[subset].select(keep_indices)
             dataset = DatasetDict(all_dataset)
         if args.subset_fraction < 1.0:  # reduce it due to computational constraints
             dataset = DatasetDict({
-                split: dataset[split].shuffle(seed=args.seed).select(
+                subset: dataset[subset].shuffle(seed=args.seed).select(
                     list(
-                        range(int(args.subset_fraction * len(dataset[split]))))
+                        range(int(args.subset_fraction * len(dataset[subset]))))
                 )
-                for split in dataset.keys()
+                for subset in dataset.keys()
             })
         if args.num_processes == 0 and args.batch_preprocess == 0:
             dataset = dataset.map(lambda x: data_preprocess(x, tokenizer, max_seq_length)
@@ -144,6 +145,9 @@ def get_dataset(data_prec_path, args, tokenizer, max_seq_length=512):
           torch.Tensor(sample["attention_mask"]).shape)
     print("Sample labels shape:",
           torch.Tensor(sample["labels"]).shape)
+    if split is not None:
+        dataset = dataset[split]
+        print(f"Using only the '{split}' split with {len(dataset)} samples.")
     return dataset
 
 
