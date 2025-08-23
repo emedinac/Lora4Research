@@ -78,5 +78,6 @@ if __name__ == "__main__":
                         help="Fraction of train split to use (0-1).")
     parser.add_argument("--ignore_ood_cases", action="store_true", default=False,
                         help="Ignore out-of-distribution cases.")
+    parser.add_argument("--seed", type=int, default=0, help="Random seed.")
     args = parser.parse_args()
     main(args)
