@@ -2,7 +2,7 @@
 
 Fine-tuning and evaluation framework for offline LLMs using Low-Rank Adaptation (LoRA).
 
-A fully offline system for research Q&A, enabling efficient fine-tuning of locally-hosted large language models and automatic metric evaluation.
+This project provides a framework for fine-tuning and evaluating LLMs (no APIs). It supports Low-Rank Adaptation (LoRA) and evaluates performance on research question–answering tasks, for arXiv and PubMed datasets, using standard metrics such as BLEU, ROUGE-L, and BERTScore.
 
 | Model            | BLEU | ROUGE-L | BERTScore (F1) |
 | -------------------- | ---- | ------- | --- |
