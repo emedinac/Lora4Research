@@ -38,7 +38,7 @@ def main(args):
 
     preds, gts = [], []
     for sample in tqdm.tqdm(dataset, desc="Processing"):
-        prompt = f"<problem>\n{sample['problem']}\n</problem>\n<approach>\n"
+        prompt = f"<problem>\n{sample['input']}\n</problem>\n<approach>\n"
         input_ids = tokenizer(prompt, return_tensors="pt").to(model.device)
         outputs = model.generate(**input_ids,
                                  temperature=0.7,
@@ -80,7 +80,7 @@ if __name__ == "__main__":
                         help="Ignore out-of-distribution cases.")
     parser.add_argument("--num_processes", type=int, default=0,
                         help="Number of processes for preprocessing.")
-    parser.add_argument("--batch_preprocess", type=int, default=0, 
+    parser.add_argument("--batch_preprocess", type=int, default=0,
                         help="Batch size for preprocessing.")
     parser.add_argument("--seed", type=int, default=0, help="Random seed.")
     args = parser.parse_args()

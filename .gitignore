@@ -1,5 +1,6 @@
 # Custom
 data/
+outputs/
 **.npy
 
 # Byte-compiled / optimized / DLL files
